@@ -1,13 +1,15 @@
 package com.megaiptv.eltv;
 
-import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.leanback.widget.ImageCardView;
 import androidx.leanback.widget.Presenter;
 
 import com.bumptech.glide.Glide;
@@ -16,53 +18,67 @@ import com.bumptech.glide.request.transition.Transition;
 
 public class ChannelCardPresenter extends Presenter {
 
-    private static final int CARD_WIDTH  = 320;
-    private static final int CARD_HEIGHT = 180;
+    // ─── ViewHolder ───────────────────────────────────────────────────────────
+
+    static final class CardViewHolder extends ViewHolder {
+        final ImageView logo;
+        final TextView  name;
+        final TextView  group;
+
+        CardViewHolder(View view) {
+            super(view);
+            logo  = view.findViewById(R.id.channel_logo);
+            name  = view.findViewById(R.id.channel_name);
+            group = view.findViewById(R.id.channel_group);
+        }
+    }
+
+    // ─── Presenter ────────────────────────────────────────────────────────────
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        Context ctx = parent.getContext();
-        ImageCardView card = new ImageCardView(ctx);
-        card.setFocusable(true);
-        card.setFocusableInTouchMode(true);
-        card.setBackgroundColor(ContextCompat.getColor(ctx, R.color.card_background));
-        return new ViewHolder(card);
+        View card = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_channel_card, parent, false);
+        return new CardViewHolder(card);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
         Channel channel = (Channel) item;
-        ImageCardView card = (ImageCardView) viewHolder.view;
+        CardViewHolder holder = (CardViewHolder) viewHolder;
 
-        card.setTitleText(channel.getName());
-        card.setContentText(channel.getGroup());
-        card.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
+        holder.name.setText(channel.getName());
+        holder.group.setText(channel.getGroup() != null ? channel.getGroup() : "");
 
-        String logo = channel.getLogo();
-        if (logo != null && !logo.isEmpty()) {
-            Glide.with(card.getContext())
-                    .load(logo)
+        String logoUrl = channel.getLogo();
+        if (logoUrl != null && !logoUrl.isEmpty()) {
+            Glide.with(holder.logo.getContext())
+                    .load(logoUrl)
                     .centerCrop()
-                    .placeholder(ContextCompat.getDrawable(card.getContext(), R.drawable.default_channel_logo))
-                    .error(ContextCompat.getDrawable(card.getContext(), R.drawable.default_channel_logo))
+                    .placeholder(ContextCompat.getDrawable(
+                            holder.logo.getContext(), R.drawable.default_channel_logo))
+                    .error(ContextCompat.getDrawable(
+                            holder.logo.getContext(), R.drawable.default_channel_logo))
                     .into(new CustomTarget<Drawable>() {
                         @Override
-                        public void onResourceReady(@NonNull Drawable resource,
-                                                    @Nullable Transition<? super Drawable> transition) {
-                            card.setMainImage(resource);
+                        public void onResourceReady(@NonNull Drawable r,
+                                                   @Nullable Transition<? super Drawable> t) {
+                            holder.logo.setImageDrawable(r);
                         }
                         @Override
-                        public void onLoadCleared(@Nullable Drawable placeholder) {}
+                        public void onLoadCleared(@Nullable Drawable p) {}
                     });
         } else {
-            card.setMainImage(ContextCompat.getDrawable(card.getContext(), R.drawable.default_channel_logo));
+            holder.logo.setImageDrawable(
+                    ContextCompat.getDrawable(holder.logo.getContext(),
+                            R.drawable.default_channel_logo));
         }
     }
 
     @Override
     public void onUnbindViewHolder(ViewHolder viewHolder) {
-        ImageCardView card = (ImageCardView) viewHolder.view;
-        card.setMainImage(null);
+        CardViewHolder holder = (CardViewHolder) viewHolder;
+        Glide.with(holder.logo.getContext()).clear(holder.logo);
+        holder.logo.setImageDrawable(null);
     }
 }
-

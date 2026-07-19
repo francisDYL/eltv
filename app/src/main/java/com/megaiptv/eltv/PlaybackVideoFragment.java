@@ -27,9 +27,10 @@ public class PlaybackVideoFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mPlayerView = view.findViewById(R.id.player_view);
 
-        String url = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_URL);
+        String url  = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_URL);
+        String name = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_NAME);
         if (url != null && !url.isEmpty()) {
-            PlayerManager.getInstance().play(requireContext(), url);
+            PlayerManager.getInstance().play(requireContext(), url, name != null ? name : "");
             mPlayerView.setPlayer(PlayerManager.getInstance().getPlayer(requireContext()));
         }
     }

@@ -2,10 +2,9 @@ package com.megaiptv.eltv;
 
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
 import androidx.leanback.app.GuidedStepSupportFragment;
 
-public class SettingsActivity extends FragmentActivity {
+public class SettingsActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

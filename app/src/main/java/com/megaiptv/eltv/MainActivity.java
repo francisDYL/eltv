@@ -2,9 +2,7 @@ package com.megaiptv.eltv;
 
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
-
-public class MainActivity extends FragmentActivity implements ThemeManager.ThemeChangeListener {
+public class MainActivity extends BaseActivity implements ThemeManager.ThemeChangeListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

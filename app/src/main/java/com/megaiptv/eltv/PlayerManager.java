@@ -3,6 +3,7 @@ package com.megaiptv.eltv;
 import android.content.Context;
 
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.okhttp.OkHttpDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -13,24 +14,25 @@ public class PlayerManager {
     private static PlayerManager instance;
     private ExoPlayer player;
 
+    // Métadonnées du flux en cours (utilisées par le mini-player)
+    private String currentUrl;
+    private String currentChannelName;
+
     public static PlayerManager getInstance() {
         if (instance == null) instance = new PlayerManager();
         return instance;
     }
 
+    // ─── Création du player ───────────────────────────────────────────────────
+
     /**
-     * Retourne (ou crée) le player singleton.
-     * Le player utilise OkHttp comme couche réseau :
-     *  - SSL étendu (trust-all) pour les sources IPTV non standard
-     *  - Timeout de 30 s (connect / read / write)
+     * Crée (ou retourne) le player ExoPlayer singleton.
+     * Utilise OkHttp comme couche réseau : SSL étendu + timeout 30 s.
      */
     public ExoPlayer getPlayer(Context context) {
         if (player == null) {
-            // Factory OkHttp → confie tous les certificats + timeout 30 s
             OkHttpDataSource.Factory okHttpFactory =
                     new OkHttpDataSource.Factory(NetworkUtils.getClient());
-
-            // Wrappée dans DefaultDataSource pour gérer les URI locales aussi
             DefaultDataSource.Factory dataSourceFactory =
                     new DefaultDataSource.Factory(context.getApplicationContext(), okHttpFactory);
 
@@ -41,8 +43,21 @@ public class PlayerManager {
         return player;
     }
 
-    /** Lance la lecture d'un flux. */
-    public void play(Context context, String url) {
+    /**
+     * Retourne le player S'IL EXISTE déjà, sans en créer un nouveau.
+     * Utilisé par le mini-player pour savoir si un flux est actif.
+     */
+    public ExoPlayer getPlayerIfExists() {
+        return player;
+    }
+
+    // ─── Lecture ──────────────────────────────────────────────────────────────
+
+    /** Lance la lecture et mémorise l'URL + le nom de la chaîne. */
+    public void play(Context context, String url, String channelName) {
+        this.currentUrl         = url;
+        this.currentChannelName = channelName;
+
         ExoPlayer p = getPlayer(context);
         p.stop();
         p.clearMediaItems();
@@ -51,11 +66,27 @@ public class PlayerManager {
         p.play();
     }
 
-    /** Libère le player (appelé quand PlaybackActivity se termine). */
+    // ─── État ─────────────────────────────────────────────────────────────────
+
+    /** Vrai si un flux est chargé et actif (lecture ou chargement). */
+    public boolean isStreamActive() {
+        if (player == null) return false;
+        int state = player.getPlaybackState();
+        return state == Player.STATE_READY || state == Player.STATE_BUFFERING;
+    }
+
+    public String getCurrentUrl()         { return currentUrl; }
+    public String getCurrentChannelName() { return currentChannelName; }
+
+    // ─── Libération ───────────────────────────────────────────────────────────
+
+    /** Libère le player (appelé à la fermeture de PlaybackActivity). */
     public void release() {
         if (player != null) {
             player.release();
             player = null;
         }
+        currentUrl         = null;
+        currentChannelName = null;
     }
 }

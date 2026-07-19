@@ -4,7 +4,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.FragmentActivity;
 
-public class SearchActivity extends FragmentActivity {
+public class SearchActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,4 +17,3 @@ public class SearchActivity extends FragmentActivity {
         }
     }
 }
-

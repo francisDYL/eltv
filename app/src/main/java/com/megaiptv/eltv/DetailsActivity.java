@@ -2,9 +2,7 @@ package com.megaiptv.eltv;
 
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
-
-public class DetailsActivity extends FragmentActivity {
+public class DetailsActivity extends BaseActivity {
 
     public static final String CHANNEL = "channel";
 

@@ -2,9 +2,7 @@ package com.megaiptv.eltv;
 
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
-
-public class BrowseErrorActivity extends FragmentActivity {
+public class BrowseErrorActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

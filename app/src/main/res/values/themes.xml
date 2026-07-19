@@ -1,0 +1,23 @@
+<resources>
+    <!-- Thème principal de l'app -->
+    <style name="Theme.ELTV" parent="Theme.Leanback">
+        <item name="colorPrimary">@color/brand_midnight</item>
+        <item name="colorPrimaryDark">@color/brand_midnight_dark</item>
+        <item name="colorAccent">@color/accent_midnight</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+    </style>
+
+    <!-- Thème pour DetailsActivity -->
+    <style name="Theme.ELTV.Details" parent="Theme.Leanback.Details">
+        <item name="colorPrimary">@color/brand_midnight</item>
+        <item name="colorAccent">@color/accent_midnight</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+    </style>
+
+    <!-- Thème pour SettingsActivity (GuidedStep) -->
+    <style name="Theme.ELTV.GuidedStep" parent="Theme.Leanback.GuidedStep">
+        <item name="colorPrimary">@color/brand_midnight</item>
+        <item name="colorAccent">@color/accent_midnight</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+    </style>
+</resources>

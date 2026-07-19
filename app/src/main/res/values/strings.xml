@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">ELTV</string>
+    <string name="browse_title">ELTV</string>
+
+    <!-- Source M3U par défaut -->
+    <string name="default_m3u_url">https://iptv-org.github.io/iptv/index.m3u</string>
+
+    <!-- Navigation -->
+    <string name="settings">Paramètres</string>
+    <string name="settings_description">Gérez vos sources M3U et personnalisez l\'interface</string>
+    <string name="settings_sources">🎛 Sources M3U</string>
+    <string name="settings_theme">🎨 Thème</string>
+    <string name="favorites">⭐ Favoris</string>
+
+    <!-- Sources -->
+    <string name="add_source">Ajouter une source M3U</string>
+    <string name="add_source_desc">Entrez l\'URL de votre playlist M3U</string>
+    <string name="sync_all">Synchroniser la playlist</string>
+    <string name="sync_all_desc">Télécharge et met à jour toutes les chaînes</string>
+    <string name="sync_source">Synchroniser cette source</string>
+    <string name="delete_source">Supprimer cette source</string>
+    <string name="sync_in_progress">Synchronisation en cours…</string>
+    <string name="sync_success">chaînes synchronisées !</string>
+    <string name="sync_error">Erreur : </string>
+
+    <!-- Lecture -->
+    <string name="play_channel">▶ Regarder</string>
+    <string name="add_favorite">⭐ Ajouter aux favoris</string>
+    <string name="remove_favorite">✕ Retirer des favoris</string>
+
+    <!-- Recherche -->
+    <string name="search_results">Résultats</string>
+
+    <!-- Thèmes -->
+    <string name="theme_applied">Thème appliqué</string>
+
+    <!-- Erreurs -->
+    <string name="error_message">Impossible de charger le contenu. Vérifiez votre connexion.</string>
+    <string name="error_back">Retour</string>
+    <string name="error_empty_url">Veuillez entrer une URL valide</string>
+
+    <!-- Legacy -->
+    <string name="grid_view">Vue grille</string>
+    <string name="error_fragment">Erreur</string>
+    <string name="personal_settings">Paramètres</string>
+</resources>

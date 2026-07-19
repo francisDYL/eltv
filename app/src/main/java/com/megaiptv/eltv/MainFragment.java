@@ -1,0 +1,249 @@
+package com.megaiptv.eltv;
+
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.leanback.app.BackgroundManager;
+import androidx.leanback.app.BrowseSupportFragment;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.HeaderItem;
+import androidx.leanback.widget.ListRow;
+import androidx.leanback.widget.ListRowPresenter;
+import androidx.leanback.widget.OnItemViewClickedListener;
+import androidx.leanback.widget.OnItemViewSelectedListener;
+import androidx.leanback.widget.Presenter;
+import androidx.leanback.widget.Row;
+import androidx.leanback.widget.RowPresenter;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class MainFragment extends BrowseSupportFragment implements ThemeManager.ThemeChangeListener {
+
+    private static final int BACKGROUND_DELAY = 300;
+
+    private final Handler          mHandler   = new Handler(Looper.getMainLooper());
+    private final ExecutorService  mExecutor  = Executors.newSingleThreadExecutor();
+    private BackgroundManager      mBgManager;
+    private Drawable               mDefaultBg;
+    private DisplayMetrics         mMetrics;
+    private Timer                  mBgTimer;
+    private String                 mBgUri;
+
+    // ─── Lifecycle ────────────────────────────────────────────────────────────
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        prepareBackground();
+        applyTheme();
+        setupUI();
+        setupListeners();
+        loadChannels();
+        ThemeManager.getInstance().addListener(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mBgTimer != null) mBgTimer.cancel();
+        ThemeManager.getInstance().removeListener(this);
+        mExecutor.shutdown();
+    }
+
+    // ─── Theme ────────────────────────────────────────────────────────────────
+
+    @Override
+    public void onThemeChanged(int theme) {
+        applyTheme();
+    }
+
+    private void applyTheme() {
+        ThemeManager tm = ThemeManager.getInstance();
+        setBrandColor(tm.getBrandColor());
+        setSearchAffordanceColor(tm.getSearchAffordanceColor());
+    }
+
+    // ─── Setup ────────────────────────────────────────────────────────────────
+
+    private void prepareBackground() {
+        mBgManager  = BackgroundManager.getInstance(requireActivity());
+        mBgManager.attach(requireActivity().getWindow());
+        mDefaultBg  = ContextCompat.getDrawable(requireContext(), R.drawable.default_background);
+        mMetrics    = requireContext().getResources().getDisplayMetrics();
+    }
+
+    private void setupUI() {
+        setTitle(getString(R.string.app_name));
+        setHeadersState(HEADERS_ENABLED);
+        setHeadersTransitionOnBackEnabled(true);
+    }
+
+    private void setupListeners() {
+        setOnSearchClickedListener(v -> startActivity(new Intent(requireActivity(), SearchActivity.class)));
+        setOnItemViewClickedListener(new ItemClickListener());
+        setOnItemViewSelectedListener(new ItemSelectListener());
+    }
+
+    // ─── Data loading ─────────────────────────────────────────────────────────
+
+    private void loadChannels() {
+        // Extraire les chaînes de caractères sur le thread principal
+        final String defaultUrl      = getString(R.string.default_m3u_url);
+        final String favLabel        = getString(R.string.favorites);
+        final String settingsLabel   = getString(R.string.settings);
+        final String sourcesLabel    = getString(R.string.settings_sources);
+        final String themeLabel      = getString(R.string.settings_theme);
+
+        mExecutor.execute(() -> {
+            AppDatabase db = AppDatabase.getDatabase(requireContext());
+
+            // Premier démarrage : ajoute la source par défaut et synchronise
+            List<Source> sources = db.sourceDao().getAll();
+            if (sources.isEmpty()) {
+                try {
+                    Source src = new Source(defaultUrl, "IPTV-ORG");
+                    db.sourceDao().insert(src);
+                    String content = NetworkUtils.fetchUrl(defaultUrl);
+                    List<Channel> channels = M3UParser.parseM3U(content, defaultUrl);
+                    db.channelDao().insertAll(channels);
+                    src.setLastSync(System.currentTimeMillis());
+                    db.sourceDao().insert(src);
+                } catch (Exception ignored) {}
+            }
+
+            List<Channel> favorites = db.channelDao().getFavorites();
+            List<String>  groups    = db.channelDao().getGroups();
+
+            final Map<String, List<Channel>> rows = new LinkedHashMap<>();
+            if (!favorites.isEmpty()) rows.put(favLabel, favorites);
+            for (String g : groups) {
+                List<Channel> ch = db.channelDao().getByGroup(g);
+                if (!ch.isEmpty()) rows.put(g, ch);
+            }
+
+            mHandler.post(() -> buildRows(rows, settingsLabel, sourcesLabel, themeLabel));
+        });
+    }
+
+    private void buildRows(Map<String, List<Channel>> rowsMap,
+                           String settingsLabel, String sourcesLabel, String themeLabel) {
+        ArrayObjectAdapter rowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        ChannelCardPresenter cardPresenter = new ChannelCardPresenter();
+
+        int i = 0;
+        for (Map.Entry<String, List<Channel>> e : rowsMap.entrySet()) {
+            ArrayObjectAdapter row = new ArrayObjectAdapter(cardPresenter);
+            for (Channel ch : e.getValue()) row.add(ch);
+            rowsAdapter.add(new ListRow(new HeaderItem(i++, e.getKey()), row));
+        }
+
+        // Ligne Paramètres
+        ArrayObjectAdapter settingsRow = new ArrayObjectAdapter(new SettingsTilePresenter());
+        settingsRow.add(sourcesLabel);
+        settingsRow.add(themeLabel);
+        rowsAdapter.add(new ListRow(new HeaderItem(i, settingsLabel), settingsRow));
+
+        setAdapter(rowsAdapter);
+    }
+
+    // ─── Background ───────────────────────────────────────────────────────────
+
+    private void updateBackground(String uri) {
+        if (uri == null || uri.isEmpty()) { mBgManager.setDrawable(mDefaultBg); return; }
+        Glide.with(requireActivity())
+                .load(uri)
+                .centerCrop()
+                .error(mDefaultBg)
+                .into(new CustomTarget<Drawable>(mMetrics.widthPixels, mMetrics.heightPixels) {
+                    @Override
+                    public void onResourceReady(@NonNull Drawable r,
+                                               @Nullable Transition<? super Drawable> t) {
+                        mBgManager.setDrawable(r);
+                    }
+                    @Override public void onLoadCleared(@Nullable Drawable p) {}
+                });
+        if (mBgTimer != null) mBgTimer.cancel();
+    }
+
+    private void startBackgroundTimer() {
+        if (mBgTimer != null) mBgTimer.cancel();
+        mBgTimer = new Timer();
+        mBgTimer.schedule(new TimerTask() {
+            @Override public void run() { mHandler.post(() -> updateBackground(mBgUri)); }
+        }, BACKGROUND_DELAY);
+    }
+
+    // ─── Listeners ────────────────────────────────────────────────────────────
+
+    private final class ItemClickListener implements OnItemViewClickedListener {
+        @Override
+        public void onItemClicked(Presenter.ViewHolder ivh, Object item,
+                                  RowPresenter.ViewHolder rvh, Row row) {
+            if (item instanceof Channel) {
+                Intent intent = new Intent(requireActivity(), DetailsActivity.class);
+                intent.putExtra(DetailsActivity.CHANNEL, (Channel) item);
+                startActivity(intent);
+            } else if (item instanceof String) {
+                Intent intent = new Intent(requireActivity(), SettingsActivity.class);
+                startActivity(intent);
+            }
+        }
+    }
+
+    private final class ItemSelectListener implements OnItemViewSelectedListener {
+        @Override
+        public void onItemSelected(Presenter.ViewHolder ivh, Object item,
+                                   RowPresenter.ViewHolder rvh, Row row) {
+            if (item instanceof Channel) {
+                mBgUri = ((Channel) item).getLogo();
+                startBackgroundTimer();
+            }
+        }
+    }
+
+    // ─── Settings tile presenter ──────────────────────────────────────────────
+
+    private class SettingsTilePresenter extends Presenter {
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent) {
+            TextView tv = new TextView(parent.getContext());
+            tv.setLayoutParams(new ViewGroup.LayoutParams(220, 220));
+            tv.setFocusable(true);
+            tv.setFocusableInTouchMode(true);
+            tv.setBackgroundColor(ThemeManager.getInstance().getBrandColor());
+            tv.setTextColor(0xFFFFFFFF);
+            tv.setGravity(Gravity.CENTER);
+            tv.setTextSize(14f);
+            tv.setPadding(16, 16, 16, 16);
+            return new ViewHolder(tv);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder viewHolder, Object item) {
+            ((TextView) viewHolder.view).setText((String) item);
+        }
+
+        @Override public void onUnbindViewHolder(ViewHolder viewHolder) {}
+    }
+
+}

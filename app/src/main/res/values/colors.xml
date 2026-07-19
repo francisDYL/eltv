@@ -1,0 +1,30 @@
+<resources>
+    <!-- ── Midnight (défaut) ─────────────────────────────────── -->
+    <color name="brand_midnight">#1A1A2E</color>
+    <color name="brand_midnight_dark">#0F0F1A</color>
+    <color name="accent_midnight">#E94560</color>
+
+    <!-- ── Forest ────────────────────────────────────────────── -->
+    <color name="brand_forest">#1B4332</color>
+    <color name="brand_forest_dark">#0D2818</color>
+    <color name="accent_forest">#52B788</color>
+
+    <!-- ── Purple ────────────────────────────────────────────── -->
+    <color name="brand_purple">#2D1B69</color>
+    <color name="brand_purple_dark">#1A0F40</color>
+    <color name="accent_purple">#9B59B6</color>
+
+    <!-- ── Commun ─────────────────────────────────────────────── -->
+    <color name="background_dark">#0D0D1A</color>
+    <color name="card_background">#1E1E2E</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0C0</color>
+
+    <!-- ── Rétrocompatibilité ──────────────────────────────────── -->
+    <color name="fastlane_background">#1A1A2E</color>
+    <color name="search_opaque">#E94560</color>
+    <color name="selected_background">#E94560</color>
+    <color name="default_background">#0D0D1A</color>
+    <color name="background_gradient_start">#0D0D1A</color>
+    <color name="background_gradient_end">#1A1A2E</color>
+</resources>

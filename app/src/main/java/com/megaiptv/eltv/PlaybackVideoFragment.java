@@ -26,20 +26,37 @@ public class PlaybackVideoFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mPlayerView = view.findViewById(R.id.player_view);
-
-        String url  = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_URL);
-        String name = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_NAME);
-        if (url != null && !url.isEmpty()) {
-            PlayerManager.getInstance().play(requireContext(), url, name != null ? name : "");
-            mPlayerView.setPlayer(PlayerManager.getInstance().getPlayer(requireContext()));
-        }
+        startPlaybackFromIntent();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (mPlayerView != null)
-            mPlayerView.setPlayer(PlayerManager.getInstance().getPlayer(requireContext()));
+        if (mPlayerView == null) return;
+
+        PlayerManager pm = PlayerManager.getInstance();
+        if (!pm.hasStream()) {
+            // Le player a été libéré (app mise en arrière-plan puis restaurée).
+            // On relance le stream depuis les extras de l'intent.
+            startPlaybackFromIntent();
+        } else {
+            // Stream toujours actif : ré-attacher la vue seulement
+            mPlayerView.setPlayer(pm.getPlayer(requireContext()));
+        }
+    }
+
+    /**
+     * Lance (ou relance) la lecture à partir des extras de l'intent de PlaybackActivity.
+     * Appelé depuis onViewCreated ET depuis onResume si le stream a été interrompu.
+     */
+    private void startPlaybackFromIntent() {
+        String url  = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_URL);
+        String name = requireActivity().getIntent().getStringExtra(PlaybackActivity.CHANNEL_NAME);
+        if (url != null && !url.isEmpty()) {
+            PlayerManager pm = PlayerManager.getInstance();
+            pm.play(requireContext(), url, name != null ? name : "");
+            mPlayerView.setPlayer(pm.getPlayer(requireContext()));
+        }
     }
 
     @Override

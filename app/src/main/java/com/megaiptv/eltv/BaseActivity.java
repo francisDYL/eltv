@@ -73,14 +73,16 @@ public abstract class BaseActivity extends FragmentActivity {
     }
 
     /**
-     * Intercept D-PAD pour rendre le mini-player accessible :
-     *
+     * Gestion des touches globales :
      * <ul>
-     *   <li>DPAD_UP  : si le focus ne peut plus monter dans le contenu Leanback
-     *       (il reste sur la même vue), on transfert le focus au bouton ▶/⏸.</li>
-     *   <li>DPAD_DOWN : si le mini-player a le focus, retour au contenu principal.</li>
-     *   <li>MEDIA_PLAY_PAUSE : bascule lecture/pause partout.</li>
+     *   <li>MEDIA_PLAY_PAUSE / MEDIA_PLAY / MEDIA_PAUSE : bascule lecture/pause partout.</li>
+     *   <li>DPAD_DOWN depuis le mini-player : retour au contenu principal.</li>
      * </ul>
+     *
+     * NOTE : La navigation DPAD_UP vers le mini-player est intentionnellement
+     * absente ici. Elle doit être activée uniquement dans les activités où le
+     * mini-player est accessible via D-PAD (ex : DetailsActivity).
+     * Dans MainActivity la navigation sur les chaînes ne doit pas être interrompue.
      */
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
@@ -102,36 +104,15 @@ public abstract class BaseActivity extends FragmentActivity {
             }
         }
 
-        // ── Navigation vers / depuis le mini-player ─────────────────────────
+        // ── DPAD_DOWN depuis le mini-player → retour au contenu ─────────────
         View container = findViewById(R.id.mini_player_container);
         boolean miniVisible = container != null
                 && container.getVisibility() == View.VISIBLE;
 
-        if (!miniVisible) return super.dispatchKeyEvent(event);
-
-        boolean miniHasFocus = container.hasFocus();
-
-        if (!miniHasFocus && key == KeyEvent.KEYCODE_DPAD_UP) {
-            // Laisse Leanback gérer d'abord ; si le focus ne bouge pas
-            // (on est déjà tout en haut du contenu), on saute au mini-player.
-            View before = getCurrentFocus();
-            boolean handled = super.dispatchKeyEvent(event);
-            View after = getCurrentFocus();
-            if (after == before || after == null) {
-                View btn = findViewById(R.id.mini_play_pause_btn);
-                if (btn != null) {
-                    btn.requestFocus();
-                    return true;
-                }
-            }
-            return handled;
-        }
-
-        if (miniHasFocus && key == KeyEvent.KEYCODE_DPAD_DOWN) {
-            // Retour au contenu principal
+        if (miniVisible && container.hasFocus()
+                && key == KeyEvent.KEYCODE_DPAD_DOWN) {
             boolean handled = super.dispatchKeyEvent(event);
             if (container.hasFocus()) {
-                // Le focus n'a pas quitté le mini-player → on le force vers le contenu
                 View content = getContentFragmentContainer();
                 if (content != null) {
                     content.requestFocus();

@@ -23,8 +23,8 @@ public class PlaybackActivity extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isFinishing()) {
-            PlayerManager.getInstance().release();
-        }
+        // Ne PAS libérer le player ici : le flux continue dans le mini-player
+        // quand l'utilisateur revient en arrière.
+        // La libération explicite se fait uniquement via le bouton "Stop" du mini-player.
     }
 }

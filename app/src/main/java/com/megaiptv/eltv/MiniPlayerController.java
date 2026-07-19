@@ -20,22 +20,31 @@ import androidx.media3.ui.PlayerView;
  */
 public class MiniPlayerController {
 
-    private final Activity    activity;
-    private final View        container;
-    private final PlayerView  playerView;
-    private final TextView    channelName;
+    private final Activity   activity;
+    private final View       container;
+    private final PlayerView playerView;
+    private final TextView   channelName;
+    private final TextView   playPauseBtn;
 
     public MiniPlayerController(Activity activity, View overlayRoot) {
-        this.activity    = activity;
-        this.container   = overlayRoot.findViewById(R.id.mini_player_container);
-        this.playerView  = overlayRoot.findViewById(R.id.mini_player_view);
-        this.channelName = overlayRoot.findViewById(R.id.mini_channel_name);
+        this.activity     = activity;
+        this.container    = overlayRoot.findViewById(R.id.mini_player_container);
+        this.playerView   = overlayRoot.findViewById(R.id.mini_player_view);
+        this.channelName  = overlayRoot.findViewById(R.id.mini_channel_name);
+        this.playPauseBtn = overlayRoot.findViewById(R.id.mini_play_pause_btn);
+
+        // Bouton play / pause
+        if (playPauseBtn != null) {
+            playPauseBtn.setOnClickListener(v -> togglePlayPause());
+        }
 
         // Bouton plein écran
-        overlayRoot.findViewById(R.id.mini_expand_btn).setOnClickListener(v -> expand());
+        View expandBtn = overlayRoot.findViewById(R.id.mini_expand_btn);
+        if (expandBtn != null) expandBtn.setOnClickListener(v -> expand());
 
         // Bouton stop
-        overlayRoot.findViewById(R.id.mini_stop_btn).setOnClickListener(v -> stop());
+        View stopBtn = overlayRoot.findViewById(R.id.mini_stop_btn);
+        if (stopBtn != null) stopBtn.setOnClickListener(v -> stop());
     }
 
     // ─── API publique ─────────────────────────────────────────────────────────
@@ -45,12 +54,14 @@ public class MiniPlayerController {
      * À appeler dans onResume() de BaseActivity.
      */
     public void update() {
-        ExoPlayer player = PlayerManager.getInstance().getPlayerIfExists();
-        if (player != null && PlayerManager.getInstance().isStreamActive()) {
+        PlayerManager pm = PlayerManager.getInstance();
+        ExoPlayer player = pm.getPlayerIfExists();
+        if (player != null && (pm.isStreamActive() || pm.hasStream())) {
             container.setVisibility(View.VISIBLE);
             playerView.setPlayer(player);
-            String name = PlayerManager.getInstance().getCurrentChannelName();
+            String name = pm.getCurrentChannelName();
             channelName.setText(name != null ? name : "");
+            refreshPlayPauseIcon();
         } else {
             container.setVisibility(View.GONE);
             playerView.setPlayer(null);
@@ -73,6 +84,21 @@ public class MiniPlayerController {
 
     // ─── Actions ──────────────────────────────────────────────────────────────
 
+    private void togglePlayPause() {
+        PlayerManager pm = PlayerManager.getInstance();
+        if (pm.isPlaying()) {
+            pm.pause();
+        } else {
+            pm.resume();
+        }
+        refreshPlayPauseIcon();
+    }
+
+    private void refreshPlayPauseIcon() {
+        if (playPauseBtn == null) return;
+        playPauseBtn.setText(PlayerManager.getInstance().isPlaying() ? "⏸" : "▶");
+    }
+
     private void expand() {
         String url  = PlayerManager.getInstance().getCurrentUrl();
         String name = PlayerManager.getInstance().getCurrentChannelName();
@@ -89,4 +115,3 @@ public class MiniPlayerController {
         container.setVisibility(View.GONE);
     }
 }
-

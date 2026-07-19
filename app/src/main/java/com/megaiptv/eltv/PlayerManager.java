@@ -66,6 +66,18 @@ public class PlayerManager {
         p.play();
     }
 
+    // ─── Contrôle de la lecture ───────────────────────────────────────────────
+
+    /** Met en pause la lecture sans libérer le player. */
+    public void pause() {
+        if (player != null) player.pause();
+    }
+
+    /** Reprend la lecture si elle était en pause. */
+    public void resume() {
+        if (player != null) player.play();
+    }
+
     // ─── État ─────────────────────────────────────────────────────────────────
 
     /** Vrai si un flux est chargé et actif (lecture ou chargement). */
@@ -73,6 +85,16 @@ public class PlayerManager {
         if (player == null) return false;
         int state = player.getPlaybackState();
         return state == Player.STATE_READY || state == Player.STATE_BUFFERING;
+    }
+
+    /** Vrai si le player est en cours de lecture (pas en pause). */
+    public boolean isPlaying() {
+        return player != null && player.isPlaying();
+    }
+
+    /** Vrai si un flux a été chargé (même en pause). */
+    public boolean hasStream() {
+        return currentUrl != null && !currentUrl.isEmpty();
     }
 
     public String getCurrentUrl()         { return currentUrl; }

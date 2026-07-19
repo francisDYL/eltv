@@ -1,6 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/details_fragment"
+<!--
+    Layout de DetailsActivity :
+    - Fragment de détails (plein écran)
+    - Mini-player docké en haut à droite (intégré dans le layout pour D-PAD access)
+-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_dark" />
+    android:background="@color/background_dark">
+
+    <!-- Conteneur du fragment de détails -->
+    <FrameLayout
+        android:id="@+id/details_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- ═══ Mini-player docké en haut à droite ═══
+         Positionné à côté du logo et des boutons favoris/lecture.
+         Intégré dans le layout → accessible via D-PAD. -->
+    <LinearLayout
+        android:id="@+id/mini_player_container"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="24dp"
+        android:orientation="vertical"
+        android:background="@drawable/mini_player_bg"
+        android:elevation="8dp"
+        android:visibility="gone"
+        android:focusable="false"
+        android:descendantFocusability="afterDescendants">
+
+        <!-- Aperçu vidéo 16:9 -->
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/mini_player_view"
+            android:layout_width="match_parent"
+            android:layout_height="157dp"
+            android:focusable="false"
+            app:show_buffering="when_playing"
+            app:use_controller="false" />
+
+        <!-- Barre de contrôle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:background="#1A000000">
+
+            <!-- Nom de la chaîne -->
+            <TextView
+                android:id="@+id/mini_channel_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:focusable="false" />
+
+            <!-- Bouton Play / Pause -->
+            <TextView
+                android:id="@+id/mini_play_pause_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="⏸"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Lecture / Pause"
+                android:nextFocusRight="@id/mini_expand_btn"
+                android:nextFocusLeft="@id/mini_stop_btn" />
+
+            <!-- Bouton plein écran -->
+            <TextView
+                android:id="@+id/mini_expand_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="⛶"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Plein écran"
+                android:nextFocusLeft="@id/mini_play_pause_btn"
+                android:nextFocusRight="@id/mini_stop_btn" />
+
+            <!-- Bouton stop -->
+            <TextView
+                android:id="@+id/mini_stop_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="■"
+                android:textColor="#E94560"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Arrêter"
+                android:nextFocusLeft="@id/mini_expand_btn"
+                android:nextFocusRight="@id/mini_play_pause_btn" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

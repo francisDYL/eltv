@@ -39,6 +39,10 @@
     <string name="error_back">Retour</string>
     <string name="error_empty_url">Veuillez entrer une URL valide</string>
 
+    <!-- Accessibilité -->
+    <string name="content_desc_channel_logo">Logo de la chaîne</string>
+    <string name="content_desc_favorite">Favori</string>
+
     <!-- Legacy -->
     <string name="grid_view">Vue grille</string>
     <string name="error_fragment">Erreur</string>

@@ -37,8 +37,9 @@ dependencies {
     // UI Android TV
     implementation(libs.leanback)
 
-    // Images
+    // Images — OkHttp3 integration pour charger les logos via notre client SSL
     implementation(libs.glide.core)
+    implementation(libs.glide.okhttp3)
     annotationProcessor(libs.glide.compiler)
 
     // Base de données Room

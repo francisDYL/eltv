@@ -2,6 +2,9 @@ package com.megaiptv.eltv;
 
 import android.os.Bundle;
 
+import androidx.media3.common.util.UnstableApi;
+
+@UnstableApi
 public class BrowseErrorActivity extends BaseActivity {
 
     @Override

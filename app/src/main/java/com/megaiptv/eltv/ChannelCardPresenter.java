@@ -1,5 +1,7 @@
 package com.megaiptv.eltv;
 
+import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,6 +57,15 @@ public class ChannelCardPresenter extends Presenter {
     @Override
     public void onUnbindViewHolder(@NonNull ViewHolder viewHolder) {
         CardViewHolder holder = (CardViewHolder) viewHolder;
+        
+        // Sécurité Glide : ne pas tenter de clear si l'activité est déjà détruite
+        Context context = holder.logo.getContext();
+        if (context instanceof Activity) {
+            Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+        }
         Glide.with(holder.logo).clear(holder.logo);
     }
 }

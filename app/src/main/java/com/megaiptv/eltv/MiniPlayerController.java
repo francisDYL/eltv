@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
 
@@ -18,6 +19,7 @@ import androidx.media3.ui.PlayerView;
  *     (Media3 détache automatiquement le mini-player)
  *   - Quand l'utilisateur revient → BaseActivity.onResume() réattache le mini-player
  */
+@UnstableApi
 public class MiniPlayerController {
 
     private final Activity   activity;
@@ -74,12 +76,16 @@ public class MiniPlayerController {
      * PlaybackActivity prend le premier plan.
      */
     public void detachView() {
-        playerView.setPlayer(null);
+        if (playerView != null) {
+            playerView.setPlayer(null);
+        }
     }
 
     /** Libère les références — appelé dans onDestroy(). */
     public void destroy() {
-        playerView.setPlayer(null);
+        if (playerView != null) {
+            playerView.setPlayer(null);
+        }
     }
 
     // ─── Actions ──────────────────────────────────────────────────────────────
@@ -112,6 +118,8 @@ public class MiniPlayerController {
 
     private void stop() {
         PlayerManager.getInstance().release();
-        container.setVisibility(View.GONE);
+        if (container != null) {
+            container.setVisibility(View.GONE);
+        }
     }
 }

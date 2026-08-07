@@ -183,8 +183,15 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
     // ─── Background ───────────────────────────────────────────────────────────
 
     private void updateBackground(String uri) {
-        if (uri == null || uri.isEmpty()) { mBgManager.setDrawable(mDefaultBg); return; }
-        Glide.with(requireActivity())
+        if (uri == null || uri.isEmpty()) { 
+            if (mBgManager != null) mBgManager.setDrawable(mDefaultBg); 
+            return; 
+        }
+
+        android.app.Activity activity = getActivity();
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) return;
+
+        Glide.with(activity)
                 .load(uri)
                 .centerCrop()
                 .error(mDefaultBg)
@@ -192,7 +199,7 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
                     @Override
                     public void onResourceReady(@NonNull Drawable r,
                                                @Nullable Transition<? super Drawable> t) {
-                        mBgManager.setDrawable(r);
+                        if (mBgManager != null) mBgManager.setDrawable(r);
                     }
                     @Override public void onLoadCleared(@Nullable Drawable p) {}
                 });

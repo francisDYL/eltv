@@ -2,8 +2,9 @@ package com.megaiptv.eltv;
 
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.media3.common.util.UnstableApi;
 
+@UnstableApi
 public class SearchActivity extends BaseActivity {
 
     @Override

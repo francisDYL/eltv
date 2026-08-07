@@ -4,14 +4,18 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.core.splashscreen.SplashScreen;
+import androidx.media3.common.util.UnstableApi;
 
+@UnstableApi
 public class MainActivity extends BaseActivity implements ThemeManager.ThemeChangeListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen.installSplashScreen(this);
-        super.onCreate(savedInstanceState);
+        // Initialisation du thème AVANT super.onCreate pour éviter les conflits avec Splash Screen
         ThemeManager.getInstance().init(this);
+        SplashScreen.installSplashScreen(this);
+        
+        super.onCreate(savedInstanceState);
         ThemeManager.getInstance().addListener(this);
         setContentView(R.layout.activity_main);
 

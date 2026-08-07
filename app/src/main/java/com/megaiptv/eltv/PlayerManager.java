@@ -55,7 +55,8 @@ public class PlayerManager {
                     .build();
 
             DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(context.getApplicationContext())
-                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                    .setEnableDecoderFallback(true); // Fallback to software if hardware fails
 
             DefaultTrackSelector trackSelector = new DefaultTrackSelector(context.getApplicationContext());
             trackSelector.setParameters(
@@ -70,6 +71,7 @@ public class PlayerManager {
                     .setMediaSourceFactory(new DefaultMediaSourceFactory(dataSourceFactory))
                     .setAudioAttributes(audioAttributes, true)
                     .setHandleAudioBecomingNoisy(true)
+                    .setWakeMode(C.WAKE_MODE_NETWORK)
                     .build();
 
             player.addListener(new Player.Listener() {

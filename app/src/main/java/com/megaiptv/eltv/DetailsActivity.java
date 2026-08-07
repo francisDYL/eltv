@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 
+import androidx.media3.common.util.UnstableApi;
+
 /**
  * Activité d'affichage des détails d'une chaîne.
  *
@@ -14,6 +16,7 @@ import android.view.View;
  *     plus monter dans Leanback, il saute au bouton ⏸/▶ du mini-player.
  *   - DOWN depuis le mini-player : retour aux détails (géré par BaseActivity).
  */
+@UnstableApi
 public class DetailsActivity extends BaseActivity {
 
     public static final String CHANNEL = "channel";

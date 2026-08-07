@@ -5,6 +5,7 @@ import android.view.KeyEvent;
 import android.view.View;
 
 import androidx.fragment.app.FragmentActivity;
+import androidx.media3.common.util.UnstableApi;
 
 /**
  * Activité de base pour toutes les activités de l'application SAUF PlaybackActivity.
@@ -17,6 +18,7 @@ import androidx.fragment.app.FragmentActivity;
  *      · DPAD_DOWN depuis mini-player → retour au contenu
  *      · MEDIA_PLAY_PAUSE partout → bascule play/pause
  */
+@UnstableApi
 public abstract class BaseActivity extends FragmentActivity {
 
     /** Contrôleur du mini-player intégré dans le layout de l'activité. */

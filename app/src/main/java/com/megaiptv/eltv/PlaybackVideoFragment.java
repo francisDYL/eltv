@@ -8,8 +8,10 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.ui.PlayerView;
 
+@UnstableApi
 public class PlaybackVideoFragment extends Fragment {
 
     private PlayerView mPlayerView;

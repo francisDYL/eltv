@@ -40,7 +40,7 @@ public class ChannelCardPresenter extends Presenter {
         CardViewHolder holder = (CardViewHolder) viewHolder;
 
         holder.name.setText(channel.getName());
-        holder.group.setText(channel.getGroup() != null ? channel.getGroup() : "");
+        holder.group.setText(channel.getCategory() != null ? channel.getCategory() : "");
 
         // Glide utilise ELTVGlideModule → OkHttpClient trust-all + timeout 30s
         // Même pattern que les apps IPTV de référence : .into(imageView) direct

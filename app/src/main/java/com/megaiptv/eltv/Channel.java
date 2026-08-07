@@ -13,7 +13,7 @@ public class Channel implements Serializable {
     private String name;
     private String url;
     private String logo;
-    private String group;
+    private String category;
     private boolean isFavorite;
 
     public Channel() {}
@@ -33,8 +33,8 @@ public class Channel implements Serializable {
     public String getLogo() { return logo; }
     public void setLogo(String logo) { this.logo = logo; }
 
-    public String getGroup() { return group; }
-    public void setGroup(String group) { this.group = group; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
     public boolean isFavorite() { return isFavorite; }
     public void setFavorite(boolean favorite) { isFavorite = favorite; }
@@ -43,7 +43,7 @@ public class Channel implements Serializable {
     public String toString() {
         return "Channel{" +
                 "name='" + name + '\'' +
-                ", group='" + group + '\'' +
+                ", category='" + category + '\'' +
                 ", isFavorite=" + isFavorite +
                 '}';
     }

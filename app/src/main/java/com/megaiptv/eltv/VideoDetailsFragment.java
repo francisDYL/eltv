@@ -2,6 +2,7 @@ package com.megaiptv.eltv;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -41,8 +42,15 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mChannel = (Channel) requireActivity().getIntent()
-                .getSerializableExtra(DetailsActivity.CHANNEL, Channel.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mChannel = requireActivity().getIntent()
+                    .getSerializableExtra(DetailsActivity.CHANNEL, Channel.class);
+        } else {
+            //noinspection deprecation
+            mChannel = (Channel) requireActivity().getIntent()
+                    .getSerializableExtra(DetailsActivity.CHANNEL);
+        }
+
         if (mChannel == null) { requireActivity().finish(); return; }
 
         mBgController.enableParallax();
@@ -54,6 +62,7 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
                 new FullWidthDetailsOverviewRowPresenter(new DetailsDescriptionPresenter());
 
         rowPresenter.setOnActionClickedListener(action -> {
+            if (mChannel == null) return;
             if (action.getId() == ACTION_PLAY) {
                 Intent intent = new Intent(requireActivity(), PlaybackActivity.class);
                 intent.putExtra(PlaybackActivity.CHANNEL_URL,  mChannel.getUrl());
@@ -64,11 +73,6 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
             }
         });
 
-        FullWidthDetailsOverviewSharedElementHelper helper =
-                new FullWidthDetailsOverviewSharedElementHelper();
-        helper.setSharedElementEnterTransition(requireActivity(),
-                DetailsActivity.CHANNEL, 500L);
-        rowPresenter.setListener(helper);
         rowPresenter.setParticipatingEntranceTransition(false);
 
         ClassPresenterSelector selector = new ClassPresenterSelector();
@@ -80,18 +84,20 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
         mDetailsRow.setActionsAdapter(mActionsAdapter);
 
         // Logo
-        Glide.with(requireContext())
-                .load(mChannel.getLogo())
-                .placeholder(ContextCompat.getDrawable(requireContext(), R.drawable.default_channel_logo))
-                .error(ContextCompat.getDrawable(requireContext(), R.drawable.default_channel_logo))
-                .into(new CustomTarget<Drawable>() {
-                    @Override
-                    public void onResourceReady(@NonNull Drawable r,
-                                               @Nullable Transition<? super Drawable> t) {
-                        mDetailsRow.setImageDrawable(r);
-                    }
-                    @Override public void onLoadCleared(@Nullable Drawable p) {}
-                });
+        if (getContext() != null) {
+            Glide.with(getContext())
+                    .load(mChannel.getLogo())
+                    .placeholder(R.drawable.default_channel_logo)
+                    .error(R.drawable.default_channel_logo)
+                    .into(new CustomTarget<Drawable>() {
+                        @Override
+                        public void onResourceReady(@NonNull Drawable r,
+                                                   @Nullable Transition<? super Drawable> t) {
+                            mDetailsRow.setImageDrawable(r);
+                        }
+                        @Override public void onLoadCleared(@Nullable Drawable p) {}
+                    });
+        }
 
         mAdapter = new ArrayObjectAdapter(selector);
         mAdapter.add(mDetailsRow);
@@ -99,6 +105,7 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
     }
 
     private void refreshActions() {
+        if (mChannel == null || mActionsAdapter == null) return;
         mActionsAdapter.clear();
         mActionsAdapter.set(ACTION_PLAY,
                 new Action(ACTION_PLAY, getString(R.string.play_channel)));
@@ -109,10 +116,18 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
     }
 
     private void toggleFavorite() {
+        if (mChannel == null) return;
         mChannel.setFavorite(!mChannel.isFavorite());
         refreshActions();
-        mExecutor.execute(() ->
-                AppDatabase.getDatabase(requireContext()).channelDao().update(mChannel));
+        
+        final Channel channelToUpdate = mChannel;
+        final android.content.Context context = getContext();
+        if (context == null) return;
+        
+        mExecutor.execute(() -> {
+            AppDatabase db = AppDatabase.getDatabase(context.getApplicationContext());
+            db.channelDao().update(channelToUpdate);
+        });
     }
 
     @Override

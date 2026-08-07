@@ -58,8 +58,13 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
         applyTheme();
         setupUI();
         setupListeners();
-        loadChannels();
         ThemeManager.getInstance().addListener(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadChannels();
     }
 
     @Override
@@ -115,11 +120,14 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
         final String themeLabel      = getString(R.string.settings_theme);
 
         mExecutor.execute(() -> {
-            AppDatabase db = AppDatabase.getDatabase(requireContext());
+            android.content.Context context = getContext();
+            if (context == null) return;
+            
+            AppDatabase db = AppDatabase.getDatabase(context);
 
             // Premier démarrage : ajoute la source par défaut et synchronise
             List<Source> sources = db.sourceDao().getAll();
-            if (sources.isEmpty()) {
+            if (sources.isEmpty() && !defaultUrl.isEmpty()) {
                 try {
                     Source src = new Source(defaultUrl, "IPTV-ORG");
                     db.sourceDao().insert(src);
@@ -134,14 +142,20 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
             List<Channel> favorites = db.channelDao().getFavorites();
             List<String>  groups    = db.channelDao().getGroups();
 
-            final Map<String, List<Channel>> rows = new LinkedHashMap<>();
-            if (!favorites.isEmpty()) rows.put(favLabel, favorites);
+            final Map<String, List<Channel>> rowsMap = new LinkedHashMap<>();
+            if (!favorites.isEmpty()) rowsMap.put(favLabel, favorites);
+            
             for (String g : groups) {
+                if (g == null || g.isEmpty()) continue;
                 List<Channel> ch = db.channelDao().getByGroup(g);
-                if (!ch.isEmpty()) rows.put(g, ch);
+                if (!ch.isEmpty()) rowsMap.put(g, ch);
             }
 
-            mHandler.post(() -> buildRows(rows, settingsLabel, sourcesLabel, themeLabel));
+            mHandler.post(() -> {
+                if (getContext() != null) {
+                    buildRows(rowsMap, settingsLabel, sourcesLabel, themeLabel);
+                }
+            });
         });
     }
 

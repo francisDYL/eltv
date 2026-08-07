@@ -9,7 +9,7 @@ public class DetailsDescriptionPresenter extends AbstractDetailsDescriptionPrese
         if (item instanceof Channel) {
             Channel ch = (Channel) item;
             viewHolder.getTitle().setText(ch.getName());
-            viewHolder.getSubtitle().setText(ch.getGroup());
+            viewHolder.getSubtitle().setText(ch.getCategory());
             viewHolder.getBody().setText(ch.getUrl());
         }
     }

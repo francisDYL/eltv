@@ -47,12 +47,25 @@ public class M3UParser {
     }
 
     public static String categorizeChannel(String name, String originalGroup) {
-        String sanitizedGroup = originalGroup != null ? originalGroup.replace(";", "/") : "";
-        String searchStr = (name + " " + sanitizedGroup).toLowerCase();
+        if (originalGroup != null && !originalGroup.trim().isEmpty()) {
+            String sanitizedGroup = originalGroup.replace(";", "/").trim();
+            String searchStr = (name + " " + sanitizedGroup).toLowerCase();
 
+            for (Map.Entry<String, String[]> entry : CATEGORY_MAP.entrySet()) {
+                for (String keyword : entry.getValue()) {
+                    if (searchStr.contains(keyword.toLowerCase())) {
+                        return entry.getKey();
+                    }
+                }
+            }
+            return sanitizedGroup; // Use original if no mapping found
+        }
+        
+        // No original group, try mapping by name only
+        String searchName = name.toLowerCase();
         for (Map.Entry<String, String[]> entry : CATEGORY_MAP.entrySet()) {
             for (String keyword : entry.getValue()) {
-                if (searchStr.contains(keyword.toLowerCase())) {
+                if (searchName.contains(keyword.toLowerCase())) {
                     return entry.getKey();
                 }
             }
@@ -86,7 +99,7 @@ public class M3UParser {
                 currentChannel = new Channel();
                 currentChannel.setName(name);
                 currentChannel.setLogo(logo);
-                currentChannel.setGroup(categorizeChannel(name, rawGroup));
+                currentChannel.setCategory(categorizeChannel(name, rawGroup));
                 currentChannel.setFavorite(false);
                 currentChannel.setSourceId(sourceId);
             } else {

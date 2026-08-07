@@ -35,7 +35,7 @@ public class NetworkUtils {
         return trustManager;
     }
 
-    /** Client OkHttp partagé : SSL étendu + timeout 30 s. */
+    /** Client OkHttp partagé : SSL étendu + timeout 30 s + User-Agent standard. */
     public static OkHttpClient getClient() {
         if (client == null) {
             try {
@@ -48,6 +48,9 @@ public class NetworkUtils {
                         .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
                         .readTimeout(TIMEOUT, TimeUnit.SECONDS)
                         .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
+                        .addInterceptor(chain -> chain.proceed(chain.request().newBuilder()
+                                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                                .build()))
                         .build();
             } catch (Exception e) {
                 Log.e(TAG, "SSL setup failed, falling back to default client", e);

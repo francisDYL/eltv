@@ -13,7 +13,7 @@ import androidx.room.Update;
 
 import java.util.List;
 
-@Database(entities = {Channel.class, Source.class}, version = 1, exportSchema = false)
+@Database(entities = {Channel.class, Source.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract ChannelDao channelDao();
     public abstract SourceDao sourceDao();
@@ -26,6 +26,7 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "eliptv_database")
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }
@@ -38,10 +39,10 @@ public abstract class AppDatabase extends RoomDatabase {
         @Query("SELECT * FROM channels")
         List<Channel> getAll();
 
-        @Query("SELECT * FROM channels WHERE `group` = :group")
-        List<Channel> getByGroup(String group);
+        @Query("SELECT * FROM channels WHERE category = :category")
+        List<Channel> getByGroup(String category);
 
-        @Query("SELECT DISTINCT `group` FROM channels WHERE `group` IS NOT NULL ORDER BY `group` ASC")
+        @Query("SELECT DISTINCT category FROM channels WHERE category IS NOT NULL ORDER BY category ASC")
         List<String> getGroups();
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)

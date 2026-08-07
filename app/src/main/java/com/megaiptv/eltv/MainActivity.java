@@ -3,10 +3,13 @@ package com.megaiptv.eltv;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.core.splashscreen.SplashScreen;
+
 public class MainActivity extends BaseActivity implements ThemeManager.ThemeChangeListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         ThemeManager.getInstance().init(this);
         ThemeManager.getInstance().addListener(this);

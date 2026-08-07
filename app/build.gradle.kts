@@ -4,16 +4,12 @@ plugins {
 
 android {
     namespace = "com.megaiptv.eltv"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.megaiptv.eltv"
-        minSdk = 33
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
@@ -38,6 +34,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.splashscreen)
     // UI Android TV
     implementation(libs.leanback)
 
@@ -47,8 +44,8 @@ dependencies {
     annotationProcessor(libs.glide.compiler)
 
     // Base de données Room
-    implementation(libs.room.runtime)
-    annotationProcessor(libs.room.compiler)
+    implementation(libs.roomRuntime)
+    annotationProcessor(libs.roomCompiler)
 
     // Lecteur Media3/ExoPlayer — avec support OkHttp (SSL + timeout)
     implementation(libs.media3.exoplayer)

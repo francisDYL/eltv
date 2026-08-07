@@ -14,6 +14,13 @@
         <item name="android:windowBackground">@color/background_dark</item>
     </style>
 
+    <!-- Thème Splash Screen (Android 12+) -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_midnight</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/project_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.ELTV</item>
+    </style>
+
     <!-- Thème pour SettingsActivity (GuidedStep) -->
     <style name="Theme.ELTV.GuidedStep" parent="Theme.Leanback.GuidedStep">
         <item name="colorPrimary">@color/brand_midnight</item>

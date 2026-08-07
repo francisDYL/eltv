@@ -2,14 +2,25 @@ package com.megaiptv.eltv;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.media3.common.AudioAttributes;
+import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.okhttp.OkHttpDataSource;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 
+@UnstableApi
 public class PlayerManager {
+    
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 
     private static PlayerManager instance;
     private ExoPlayer player;
@@ -32,13 +43,46 @@ public class PlayerManager {
     public ExoPlayer getPlayer(Context context) {
         if (player == null) {
             OkHttpDataSource.Factory okHttpFactory =
-                    new OkHttpDataSource.Factory(NetworkUtils.getClient());
+                    new OkHttpDataSource.Factory(NetworkUtils.getClient())
+                            .setUserAgent(USER_AGENT);
+
             DefaultDataSource.Factory dataSourceFactory =
                     new DefaultDataSource.Factory(context.getApplicationContext(), okHttpFactory);
 
-            player = new ExoPlayer.Builder(context.getApplicationContext())
-                    .setMediaSourceFactory(new DefaultMediaSourceFactory(dataSourceFactory))
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build();
+
+            DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(context.getApplicationContext())
+                    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+
+            DefaultTrackSelector trackSelector = new DefaultTrackSelector(context.getApplicationContext());
+            trackSelector.setParameters(
+                    trackSelector.buildUponParameters()
+                            .setTunnelingEnabled(false) // Tunneling can cause audio issues on some devices
+                            .build()
+            );
+
+            player = new ExoPlayer.Builder(context.getApplicationContext())
+                    .setRenderersFactory(renderersFactory)
+                    .setTrackSelector(trackSelector)
+                    .setMediaSourceFactory(new DefaultMediaSourceFactory(dataSourceFactory))
+                    .setAudioAttributes(audioAttributes, true)
+                    .setHandleAudioBecomingNoisy(true)
+                    .build();
+
+            player.addListener(new Player.Listener() {
+                @Override
+                public void onPlayerError(@NonNull PlaybackException error) {
+                    android.util.Log.e("PlayerManager", "Playback Error: " + error.getErrorCodeName() + " - " + error.getMessage());
+                }
+
+                @Override
+                public void onTracksChanged(@NonNull Tracks tracks) {
+                    android.util.Log.d("PlayerManager", "Tracks changed. Has audio: " + tracks.isTypeSelected(C.TRACK_TYPE_AUDIO));
+                }
+            });
         }
         return player;
     }
@@ -62,6 +106,7 @@ public class PlayerManager {
         p.stop();
         p.clearMediaItems();
         p.setMediaItem(MediaItem.fromUri(url));
+        p.setVolume(1.0f); // Ensure volume is explicitly enabled
         p.prepare();
         p.play();
     }

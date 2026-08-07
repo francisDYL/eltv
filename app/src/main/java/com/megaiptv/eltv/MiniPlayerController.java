@@ -56,15 +56,15 @@ public class MiniPlayerController {
     public void update() {
         PlayerManager pm = PlayerManager.getInstance();
         ExoPlayer player = pm.getPlayerIfExists();
-        if (player != null && (pm.isStreamActive() || pm.hasStream())) {
+        if (container != null && player != null && (pm.isStreamActive() || pm.hasStream())) {
             container.setVisibility(View.VISIBLE);
-            playerView.setPlayer(player);
+            if (playerView != null) playerView.setPlayer(player);
             String name = pm.getCurrentChannelName();
-            channelName.setText(name != null ? name : "");
+            if (channelName != null) channelName.setText(name != null ? name : "");
             refreshPlayPauseIcon();
-        } else {
+        } else if (container != null) {
             container.setVisibility(View.GONE);
-            playerView.setPlayer(null);
+            if (playerView != null) playerView.setPlayer(null);
         }
     }
 

@@ -10,12 +10,15 @@ android {
         applicationId = "com.megaiptv.eltv"
         minSdk = 31
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.1.3"
+        versionCode = 9
+        versionName = "1.1.7"
 
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
         }
+        
+        // Optimize for large screens and prevent rendering issues on 4K displays
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
@@ -26,9 +29,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Reduce dex overhead for large screen devices
+            multiDexEnabled = false
         }
         debug {
             isMinifyEnabled = false
+            multiDexEnabled = false
         }
     }
     compileOptions {
@@ -37,6 +43,9 @@ android {
     }
 
     packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
         jniLibs {
             useLegacyPackaging = true
         }

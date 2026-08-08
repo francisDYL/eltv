@@ -26,6 +26,13 @@ public class ELTVApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        // Set default uncaught exception handler for debugging on 4K TVs
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            android.util.Log.e("ELTVApplication", "Uncaught exception", throwable);
+            // Log the error but don't crash the app unnecessarily
+            System.exit(1);
+        });
+
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
 
             @Override
@@ -43,7 +50,9 @@ public class ELTVApplication extends Application {
                 if (startedCount == 0) {
                     // Aucune activité en premier plan → app en arrière-plan
                     // Arrêt immédiat du stream
-                    PlayerManager.getInstance().release();
+                    try {
+                        PlayerManager.getInstance().release();
+                    } catch (Exception ignored) {}
                 }
             }
 

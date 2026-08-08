@@ -11,12 +11,20 @@ public class MainActivity extends BaseActivity implements ThemeManager.ThemeChan
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Initialisation du thème AVANT super.onCreate pour éviter les conflits avec Splash Screen
-        ThemeManager.getInstance().init(this);
-        SplashScreen.installSplashScreen(this);
-        
+        try {
+            SplashScreen.installSplashScreen(this);
+        } catch (Exception e) {
+            android.util.Log.e("MainActivity", "SplashScreen failed (non-critical)", e);
+        }
         super.onCreate(savedInstanceState);
-        ThemeManager.getInstance().addListener(this);
+        
+        try {
+            ThemeManager.getInstance().init(this);
+            ThemeManager.getInstance().addListener(this);
+        } catch (Exception e) {
+            android.util.Log.e("MainActivity", "ThemeManager init failed", e);
+        }
+        
         setContentView(R.layout.activity_main);
 
         // Mini-player intégré dans activity_main.xml (pas d'overlay flottant)

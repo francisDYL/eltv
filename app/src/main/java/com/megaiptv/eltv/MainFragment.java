@@ -54,9 +54,20 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
     @Override
     public void onViewCreated(@NonNull android.view.View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        prepareBackground();
         setupUI();
         setupListeners();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Defer background manager attachment to ensure window is ready on 4K hardware
+        // Use post to ensure window decorations are fully initialized
+        mHandler.post(() -> {
+            if (mBgManager == null && getActivity() != null) {
+                prepareBackground();
+            }
+        });
     }
 
     @Override
@@ -88,18 +99,53 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
     }
 
     private void applyTheme() {
-        ThemeManager tm = ThemeManager.getInstance();
-        setBrandColor(tm.getBrandColor());
-        setSearchAffordanceColor(tm.getSearchAffordanceColor());
+        try {
+            ThemeManager tm = ThemeManager.getInstance();
+            setBrandColor(tm.getBrandColor());
+            setSearchAffordanceColor(tm.getSearchAffordanceColor());
+        } catch (Exception ignored) {}
     }
 
     // ─── Setup ────────────────────────────────────────────────────────────────
 
     private void prepareBackground() {
-        mBgManager  = BackgroundManager.getInstance(requireActivity());
-        mBgManager.attach(requireActivity().getWindow());
-        mDefaultBg  = ContextCompat.getDrawable(requireContext(), R.drawable.default_background);
-        mMetrics    = requireContext().getResources().getDisplayMetrics();
+        try {
+            android.app.Activity activity = getActivity();
+            if (activity == null || activity.isFinishing()) return;
+            
+            // Get metrics first to determine if we should enable background
+            mMetrics = activity.getResources().getDisplayMetrics();
+            
+            // For 4K displays (width >= 3840), use a more conservative approach
+            boolean is4K = mMetrics.widthPixels >= 3840 || mMetrics.heightPixels >= 2160;
+            
+            if (is4K) {
+                // On 4K TVs, skip dynamic backgrounds to avoid OOM crashes
+                android.util.Log.i("MainFragment", "4K display detected, using static background");
+                // Just set the default background color instead of BackgroundManager
+                if (activity.getWindow() != null) {
+                    activity.getWindow().setBackgroundDrawableResource(R.drawable.default_background);
+                }
+                mDefaultBg = ContextCompat.getDrawable(activity, R.drawable.default_background);
+                return;
+            }
+            
+            // For non-4K displays, use BackgroundManager as before
+            mBgManager = BackgroundManager.getInstance(activity);
+            if (!mBgManager.isAttached()) {
+                mBgManager.attach(activity.getWindow());
+            }
+            mDefaultBg = ContextCompat.getDrawable(activity, R.drawable.default_background);
+        } catch (Exception e) {
+            android.util.Log.e("MainFragment", "BackgroundManager setup failed", e);
+            // Fallback: set static background
+            try {
+                android.app.Activity activity = getActivity();
+                if (activity != null && activity.getWindow() != null) {
+                    activity.getWindow().setBackgroundDrawableResource(R.drawable.default_background);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     private void setupUI() {
@@ -125,64 +171,87 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
         final String themeLabel      = getString(R.string.settings_theme);
 
         mExecutor.execute(() -> {
-            android.content.Context context = getContext();
-            if (context == null) return;
-            
-            AppDatabase db = AppDatabase.getDatabase(context);
-
-            // Premier démarrage : ajoute la source par défaut et synchronise
-            List<Source> sources = db.sourceDao().getAll();
-            if (sources.isEmpty() && !defaultUrl.isEmpty()) {
-                try {
-                    Source src = new Source(defaultUrl, "IPTV-ORG");
-                    db.sourceDao().insert(src);
-                    String content = NetworkUtils.fetchUrl(defaultUrl);
-                    List<Channel> channels = M3UParser.parseM3U(content, defaultUrl);
-                    db.channelDao().insertAll(channels);
-                    src.setLastSync(System.currentTimeMillis());
-                    db.sourceDao().insert(src);
-                } catch (Exception ignored) {}
-            }
-
-            List<Channel> favorites = db.channelDao().getFavorites();
-            List<String>  groups    = db.channelDao().getGroups();
-
             final Map<String, List<Channel>> rowsMap = new LinkedHashMap<>();
-            if (!favorites.isEmpty()) rowsMap.put(favLabel, favorites);
             
-            for (String g : groups) {
-                if (g == null || g.isEmpty()) continue;
-                List<Channel> ch = db.channelDao().getByGroup(g);
-                if (!ch.isEmpty()) rowsMap.put(g, ch);
-            }
-
-            mHandler.post(() -> {
-                if (getContext() != null) {
-                    buildRows(rowsMap, settingsLabel, sourcesLabel, themeLabel);
+            try {
+                android.content.Context context = getContext();
+                if (context == null) {
+                    // Context lost, show settings only
+                    mHandler.post(() -> buildRows(rowsMap, settingsLabel, sourcesLabel, themeLabel));
+                    return;
                 }
-            });
+                
+                AppDatabase db = AppDatabase.getDatabase(context);
+
+                // Premier démarrage : ajoute la source par défaut et synchronise
+                List<Source> sources = db.sourceDao().getAll();
+                if (sources.isEmpty() && !defaultUrl.isEmpty()) {
+                    try {
+                        Source src = new Source(defaultUrl, "IPTV-ORG");
+                        db.sourceDao().insert(src);
+                        String content = NetworkUtils.fetchUrl(defaultUrl);
+                        List<Channel> channels = M3UParser.parseM3U(content, defaultUrl);
+                        db.channelDao().insertAll(channels);
+                        src.setLastSync(System.currentTimeMillis());
+                        db.sourceDao().insert(src);
+                    } catch (Exception e) {
+                        android.util.Log.w("MainFragment", "Failed to load default source", e);
+                    }
+                }
+
+                List<Channel> favorites = db.channelDao().getFavorites();
+                List<String>  groups    = db.channelDao().getGroups();
+
+                if (!favorites.isEmpty()) rowsMap.put(favLabel, favorites);
+                
+                for (String g : groups) {
+                    if (g == null || g.isEmpty()) continue;
+                    List<Channel> ch = db.channelDao().getByGroup(g);
+                    if (!ch.isEmpty()) rowsMap.put(g, ch);
+                }
+            } catch (Exception e) {
+                android.util.Log.e("MainFragment", "Error loading channels", e);
+            } finally {
+                // Always show settings, even if channel loading failed
+                mHandler.post(() -> {
+                    if (getContext() != null) {
+                        buildRows(rowsMap, settingsLabel, sourcesLabel, themeLabel);
+                    }
+                });
+            }
         });
     }
 
-    private void buildRows(Map<String, List<Channel>> rowsMap,
-                           String settingsLabel, String sourcesLabel, String themeLabel) {
+    private void buildRows(Map<String, List<Channel>> rowsMap, String settingsLabel, 
+                          String sourcesLabel, String themeLabel) {
         ArrayObjectAdapter rowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        ChannelCardPresenter cardPresenter = new ChannelCardPresenter();
-
         int i = 0;
+
+        // Show welcome message if no channels
+        if (rowsMap.isEmpty()) {
+            ArrayObjectAdapter welcomeRow = new ArrayObjectAdapter(new WelcomePresenter());
+            welcomeRow.add("Welcome to ELTV!");
+            rowsAdapter.add(new ListRow(new HeaderItem(i++, "📺 Getting Started"), welcomeRow));
+        }
+
+        // Add channel rows
         for (Map.Entry<String, List<Channel>> e : rowsMap.entrySet()) {
-            ArrayObjectAdapter row = new ArrayObjectAdapter(cardPresenter);
-            for (Channel ch : e.getValue()) row.add(ch);
+            ArrayObjectAdapter row = new ArrayObjectAdapter(new ChannelCardPresenter());
+            row.addAll(0, e.getValue());
             rowsAdapter.add(new ListRow(new HeaderItem(i++, e.getKey()), row));
         }
 
-        // Ligne Paramètres
+        // Add settings row
         ArrayObjectAdapter settingsRow = new ArrayObjectAdapter(new SettingsTilePresenter());
         settingsRow.add(sourcesLabel);
         settingsRow.add(themeLabel);
         rowsAdapter.add(new ListRow(new HeaderItem(i, settingsLabel), settingsRow));
 
         setAdapter(rowsAdapter);
+    }
+    
+    private void showEmptyState() {
+        // No longer needed - welcome state is shown in buildRows
     }
 
     // ─── Background ───────────────────────────────────────────────────────────
@@ -271,6 +340,33 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, Object item) {
             ((TextView) viewHolder.view).setText((String) item);
+        }
+
+        @Override public void onUnbindViewHolder(ViewHolder viewHolder) {}
+    }
+    
+    // ─── Welcome presenter ────────────────────────────────────────────────────
+
+    private class WelcomePresenter extends Presenter {
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent) {
+            TextView tv = new TextView(parent.getContext());
+            tv.setLayoutParams(new ViewGroup.LayoutParams(800, 300));
+            tv.setFocusable(false);
+            tv.setBackgroundColor(0x40FFFFFF);
+            tv.setTextColor(0xFFFFFFFF);
+            tv.setGravity(Gravity.CENTER);
+            tv.setTextSize(16f);
+            tv.setPadding(32, 32, 32, 32);
+            return new ViewHolder(tv);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder viewHolder, Object item) {
+            TextView tv = (TextView) viewHolder.view;
+            tv.setText("📺 Welcome to ELTV!\n\n" +
+                    "No channels found. Get started by adding an M3U playlist source.\n\n" +
+                    "Navigate to Settings → Sources M3U below to add your playlist.");
         }
 
         @Override public void onUnbindViewHolder(ViewHolder viewHolder) {}

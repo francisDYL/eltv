@@ -6,6 +6,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Declare support for various screen sizes and densities -->
+    <supports-screens
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true"
+        android:requiresSmallestWidthDp="600" />
+
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
@@ -25,7 +32,9 @@
         android:theme="@style/Theme.ELTV"
         android:largeHeap="true"
         android:hardwareAccelerated="true"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:vmSafeMode="true"
+        android:resizeableActivity="false">
         <!-- Activité principale (lanceur TV) -->
         <activity
             android:name=".MainActivity"

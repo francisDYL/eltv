@@ -88,11 +88,11 @@ public class M3UParser {
                 Map<String, String> attrs = parseAttributes(line);
                 int lastComma = line.lastIndexOf(',');
                 String name = lastComma != -1 ? line.substring(lastComma + 1).trim() : "Unknown Channel";
-                
+
                 String logo = attrs.get("tvg-logo");
                 if (logo == null) logo = attrs.get("logo");
                 if (logo == null) logo = "";
-                
+
                 String rawGroup = attrs.get("group-title");
                 if (rawGroup == null) rawGroup = "";
 

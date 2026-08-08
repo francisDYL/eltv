@@ -52,12 +52,17 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
     // ─── Lifecycle ────────────────────────────────────────────────────────────
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onViewCreated(@NonNull android.view.View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         prepareBackground();
-        applyTheme();
         setupUI();
         setupListeners();
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        applyTheme();
         ThemeManager.getInstance().addListener(this);
     }
 
@@ -191,11 +196,15 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
         android.app.Activity activity = getActivity();
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) return;
 
+        // Cap background resolution to 1080p even on 4K to avoid OOM
+        int width  = Math.min(mMetrics.widthPixels,  1920);
+        int height = Math.min(mMetrics.heightPixels, 1080);
+
         Glide.with(activity)
                 .load(uri)
                 .centerCrop()
                 .error(mDefaultBg)
-                .into(new CustomTarget<Drawable>(mMetrics.widthPixels, mMetrics.heightPixels) {
+                .into(new CustomTarget<Drawable>(width, height) {
                     @Override
                     public void onResourceReady(@NonNull Drawable r,
                                                @Nullable Transition<? super Drawable> t) {

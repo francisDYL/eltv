@@ -8,10 +8,14 @@ android {
 
     defaultConfig {
         applicationId = "com.megaiptv.eltv"
-        minSdk = 26
-        targetSdk = 35
-        versionCode = 3
-        versionName = "1.1.1"
+        minSdk = 31
+        targetSdk = 34
+        versionCode = 5
+        versionName = "1.1.3"
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
     }
 
     buildTypes {
@@ -30,6 +34,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 

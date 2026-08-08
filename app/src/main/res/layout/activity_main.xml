@@ -20,7 +20,7 @@
          Intégré dans le layout → accessible via D-PAD (UP depuis le contenu). -->
     <LinearLayout
         android:id="@+id/mini_player_container"
-        android:layout_width="260dp"
+        android:layout_width="@dimen/mini_player_width"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_marginTop="16dp"
@@ -36,7 +36,7 @@
         <androidx.media3.ui.PlayerView
             android:id="@+id/mini_player_view"
             android:layout_width="match_parent"
-            android:layout_height="146dp"
+            android:layout_height="@dimen/mini_player_height"
             android:focusable="false"
             app:show_buffering="when_playing"
             app:use_controller="false" />

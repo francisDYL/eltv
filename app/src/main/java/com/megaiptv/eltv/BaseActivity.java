@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 
+import android.annotation.SuppressLint;
 import androidx.fragment.app.FragmentActivity;
 import androidx.media3.common.util.UnstableApi;
 
@@ -87,6 +88,7 @@ public abstract class BaseActivity extends FragmentActivity {
      * Dans MainActivity la navigation sur les chaînes ne doit pas être interrompue.
      */
     @Override
+    @SuppressLint("RestrictedApi")
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() != KeyEvent.ACTION_DOWN) {
             return super.dispatchKeyEvent(event);

@@ -12,6 +12,9 @@
     <uses-feature
         android:name="android.software.leanback"
         android:required="true" />
+    <uses-feature
+        android:name="android.hardware.type.television"
+        android:required="true" />
 
     <application
         android:name=".ELTVApplication"
@@ -20,6 +23,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.ELTV"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
         android:usesCleartextTraffic="true">
         <!-- Activité principale (lanceur TV) -->
         <activity

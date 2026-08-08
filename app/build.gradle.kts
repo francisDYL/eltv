@@ -10,8 +10,8 @@ android {
         applicationId = "com.megaiptv.eltv"
         minSdk = 31
         targetSdk = 34
-        versionCode = 9
-        versionName = "1.1.7"
+        versionCode = 12
+        versionName = "1.1.10"
 
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))

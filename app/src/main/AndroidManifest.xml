@@ -33,7 +33,6 @@
         android:largeHeap="true"
         android:hardwareAccelerated="true"
         android:usesCleartextTraffic="true"
-        android:vmSafeMode="true"
         android:resizeableActivity="false">
         <!-- Activité principale (lanceur TV) -->
         <activity

@@ -66,14 +66,28 @@ public class SearchFragment extends SearchSupportFragment
         if (query == null || query.trim().isEmpty()) return;
 
         mExecutor.execute(() -> {
-            List<Channel> results = AppDatabase.getDatabase(requireContext())
-                    .channelDao().searchChannels(query.trim());
+            List<Channel> results;
+            
+            // Use in-memory fallback if database is unavailable
+            if (InMemoryChannelStore.getInstance().isActive()) {
+                results = InMemoryChannelStore.getInstance().searchChannels(query.trim());
+            } else {
+                try {
+                    results = AppDatabase.getDatabase(requireContext())
+                            .channelDao().searchChannels(query.trim());
+                } catch (Exception e) {
+                    android.util.Log.e("SearchFragment", "Search failed", e);
+                    results = new java.util.ArrayList<>();
+                }
+            }
+            
+            List<Channel> finalResults = results;
             mHandler.post(() -> {
                 mRowsAdapter.clear();
-                if (!results.isEmpty()) {
+                if (!finalResults.isEmpty()) {
                     ArrayObjectAdapter listAdapter =
                             new ArrayObjectAdapter(new ChannelCardPresenter());
-                    listAdapter.addAll(0, results);
+                    listAdapter.addAll(0, finalResults);
                     mRowsAdapter.add(new ListRow(
                             new HeaderItem(0, getString(R.string.search_results)), listAdapter));
                 }

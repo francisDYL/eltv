@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Ajustements pour écrans 4K (2160p) -->
+    <dimen name="lb_browse_rows_margin_start" tools:override="true">120dp</dimen>
+    <dimen name="lb_browse_rows_margin_top" tools:override="true">220dp</dimen>
+
+    <dimen name="channel_card_width">280dp</dimen>
+    <dimen name="channel_card_height">168dp</dimen>
+
+    <!-- Mini-player proportions maintenues pour 4K -->
+    <dimen name="mini_player_width">320dp</dimen>
+    <dimen name="mini_player_height">180dp</dimen>
+    <dimen name="mini_player_width_details">340dp</dimen>
+    <dimen name="mini_player_height_details">191dp</dimen>
+</resources>

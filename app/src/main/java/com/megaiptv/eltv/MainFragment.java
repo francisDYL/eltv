@@ -172,6 +172,7 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
 
         mExecutor.execute(() -> {
             final Map<String, List<Channel>> rowsMap = new LinkedHashMap<>();
+            boolean usingFallback = false;
             
             try {
                 android.content.Context context = getContext();
@@ -181,41 +182,75 @@ public class MainFragment extends BrowseSupportFragment implements ThemeManager.
                     return;
                 }
                 
-                AppDatabase db = AppDatabase.getDatabase(context);
-
-                // Premier démarrage : ajoute la source par défaut et synchronise
-                List<Source> sources = db.sourceDao().getAll();
-                if (sources.isEmpty() && !defaultUrl.isEmpty()) {
-                    try {
-                        Source src = new Source(defaultUrl, "IPTV-ORG");
-                        db.sourceDao().insert(src);
-                        String content = NetworkUtils.fetchUrl(defaultUrl);
-                        List<Channel> channels = M3UParser.parseM3U(content, defaultUrl);
-                        db.channelDao().insertAll(channels);
-                        src.setLastSync(System.currentTimeMillis());
-                        db.sourceDao().insert(src);
-                    } catch (Exception e) {
-                        android.util.Log.w("MainFragment", "Failed to load default source", e);
+                // Check if we should use in-memory fallback
+                if (InMemoryChannelStore.getInstance().isActive()) {
+                    usingFallback = true;
+                    android.util.Log.i("MainFragment", "Using in-memory storage (database unavailable)");
+                    
+                    InMemoryChannelStore store = InMemoryChannelStore.getInstance();
+                    List<Channel> favorites = store.getFavorites();
+                    List<String> groups = store.getGroups();
+                    
+                    if (!favorites.isEmpty()) rowsMap.put(favLabel, favorites);
+                    
+                    for (String g : groups) {
+                        if (g == null || g.isEmpty()) continue;
+                        List<Channel> ch = store.getChannelsByGroup(g);
+                        if (!ch.isEmpty()) rowsMap.put(g, ch);
                     }
-                }
+                } else {
+                    // Try to use database
+                    AppDatabase db = null;
+                    try {
+                        db = AppDatabase.getDatabase(context);
+                    } catch (Exception e) {
+                        android.util.Log.e("MainFragment", "Database initialization failed", e);
+                        // Show settings even if DB fails
+                        mHandler.post(() -> buildRows(rowsMap, settingsLabel, sourcesLabel, themeLabel));
+                        return;
+                    }
 
-                List<Channel> favorites = db.channelDao().getFavorites();
-                List<String>  groups    = db.channelDao().getGroups();
+                    // Premier démarrage : ajoute la source par défaut et synchronise
+                    List<Source> sources = db.sourceDao().getAll();
+                    if (sources.isEmpty() && !defaultUrl.isEmpty()) {
+                        try {
+                            Source src = new Source(defaultUrl, "IPTV-ORG");
+                            db.sourceDao().insert(src);
+                            String content = NetworkUtils.fetchUrl(defaultUrl);
+                            List<Channel> channels = M3UParser.parseM3U(content, defaultUrl);
+                            db.channelDao().insertAll(channels);
+                            src.setLastSync(System.currentTimeMillis());
+                            db.sourceDao().insert(src);
+                        } catch (Exception e) {
+                            android.util.Log.w("MainFragment", "Failed to load default source", e);
+                        }
+                    }
 
-                if (!favorites.isEmpty()) rowsMap.put(favLabel, favorites);
-                
-                for (String g : groups) {
-                    if (g == null || g.isEmpty()) continue;
-                    List<Channel> ch = db.channelDao().getByGroup(g);
-                    if (!ch.isEmpty()) rowsMap.put(g, ch);
+                    List<Channel> favorites = db.channelDao().getFavorites();
+                    List<String>  groups    = db.channelDao().getGroups();
+
+                    if (!favorites.isEmpty()) rowsMap.put(favLabel, favorites);
+                    
+                    for (String g : groups) {
+                        if (g == null || g.isEmpty()) continue;
+                        List<Channel> ch = db.channelDao().getByGroup(g);
+                        if (!ch.isEmpty()) rowsMap.put(g, ch);
+                    }
                 }
             } catch (Exception e) {
                 android.util.Log.e("MainFragment", "Error loading channels", e);
             } finally {
                 // Always show settings, even if channel loading failed
+                final boolean finalUsingFallback = usingFallback;
                 mHandler.post(() -> {
                     if (getContext() != null) {
                         buildRows(rowsMap, settingsLabel, sourcesLabel, themeLabel);
+                        if (finalUsingFallback && !rowsMap.isEmpty()) {
+                            // Show warning that we're in fallback mode
+                            android.widget.Toast.makeText(getContext(), 
+                                "⚠️ Database unavailable - changes won't be saved", 
+                                android.widget.Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
             }

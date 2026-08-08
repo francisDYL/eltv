@@ -125,8 +125,18 @@ public class VideoDetailsFragment extends DetailsSupportFragment {
         if (context == null) return;
         
         mExecutor.execute(() -> {
-            AppDatabase db = AppDatabase.getDatabase(context.getApplicationContext());
-            db.channelDao().update(channelToUpdate);
+            // Use in-memory fallback if database is unavailable
+            if (InMemoryChannelStore.getInstance().isActive()) {
+                InMemoryChannelStore.getInstance().updateChannel(channelToUpdate);
+                android.util.Log.i("VideoDetailsFragment", "Favorite updated in memory (won't persist)");
+            } else {
+                try {
+                    AppDatabase db = AppDatabase.getDatabase(context.getApplicationContext());
+                    db.channelDao().update(channelToUpdate);
+                } catch (Exception e) {
+                    android.util.Log.e("VideoDetailsFragment", "Failed to update favorite", e);
+                }
+            }
         });
     }
 

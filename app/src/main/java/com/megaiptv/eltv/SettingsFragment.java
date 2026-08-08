@@ -153,21 +153,78 @@ public class SettingsFragment extends GuidedStepSupportFragment {
         Handler handler = new Handler(Looper.getMainLooper());
 
         Executors.newSingleThreadExecutor().execute(() -> {
+            AppDatabase db = null;
+            boolean usingFallback = false;
+            
             try {
-                AppDatabase db = AppDatabase.getDatabase(appCtx);
+                // Try to initialize database with retry logic
+                int retries = 3;
+                Exception lastError = null;
+                while (retries > 0 && db == null) {
+                    try {
+                        db = AppDatabase.getDatabase(appCtx);
+                    } catch (Exception e) {
+                        lastError = e;
+                        retries--;
+                        if (retries > 0) {
+                            Thread.sleep(500); // Wait before retry
+                        }
+                    }
+                }
+                
+                if (db == null) {
+                    // Activate in-memory fallback
+                    usingFallback = true;
+                    InMemoryChannelStore.getInstance().activate();
+                    android.util.Log.w("SettingsFragment", "Database unavailable, using in-memory storage");
+                }
+                
                 Source src = new Source(finalUrl, "Source M3U");
-                db.sourceDao().insert(src);
-                db.channelDao().deleteBySource(finalUrl);
+                
+                if (usingFallback) {
+                    InMemoryChannelStore store = InMemoryChannelStore.getInstance();
+                    store.deleteChannelsBySource(finalUrl);
+                } else {
+                    db.sourceDao().insert(src);
+                    db.channelDao().deleteBySource(finalUrl);
+                }
+                
                 String content = NetworkUtils.fetchUrl(finalUrl);
+                if (content == null || content.trim().isEmpty()) {
+                    throw new Exception("Empty response from URL");
+                }
+                
                 List<Channel> channels = M3UParser.parseM3U(content, finalUrl);
-                db.channelDao().insertAll(channels);
-                src.setLastSync(System.currentTimeMillis());
-                db.sourceDao().insert(src);
+                if (channels == null || channels.isEmpty()) {
+                    throw new Exception("No channels found in playlist");
+                }
+                
+                if (usingFallback) {
+                    InMemoryChannelStore store = InMemoryChannelStore.getInstance();
+                    store.insertChannels(channels);
+                    src.setLastSync(System.currentTimeMillis());
+                    store.insertSource(src);
+                } else {
+                    db.channelDao().insertAll(channels);
+                    src.setLastSync(System.currentTimeMillis());
+                    db.sourceDao().insert(src);
+                }
+                
                 int count = channels.size();
-                handler.post(() -> Toast.makeText(appCtx,
-                        count + " " + appCtx.getString(R.string.sync_success),
-                        Toast.LENGTH_LONG).show());
+                final boolean finalUsingFallback = usingFallback;
+                handler.post(() -> {
+                    String message = count + " " + appCtx.getString(R.string.sync_success);
+                    if (finalUsingFallback) {
+                        message += "\n⚠️ Database failed - using temporary storage (data won't persist)";
+                    }
+                    Toast.makeText(appCtx, message, Toast.LENGTH_LONG).show();
+                    // Go back to refresh the main screen
+                    if (getActivity() != null) {
+                        getActivity().finish();
+                    }
+                });
             } catch (Exception e) {
+                android.util.Log.e("SettingsFragment", "Sync failed", e);
                 handler.post(() -> Toast.makeText(appCtx,
                         appCtx.getString(R.string.sync_error) + e.getMessage(),
                         Toast.LENGTH_LONG).show());

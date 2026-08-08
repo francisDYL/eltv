@@ -19,19 +19,64 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract SourceDao sourceDao();
 
     private static volatile AppDatabase INSTANCE;
+    private static volatile boolean DATABASE_AVAILABLE = true;
+
+    public static boolean isDatabaseAvailable() {
+        return DATABASE_AVAILABLE;
+    }
 
     public static AppDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    AppDatabase.class, "eliptv_database")
-                            .fallbackToDestructiveMigration()
-                            .build();
+                    try {
+                        Context appContext = context.getApplicationContext();
+                        
+                        // Verify database directory exists and is writable
+                        java.io.File dbDir = appContext.getDatabasePath("eliptv_database").getParentFile();
+                        if (dbDir != null && !dbDir.exists()) {
+                            boolean created = dbDir.mkdirs();
+                            android.util.Log.i("AppDatabase", "Database directory created: " + created);
+                        }
+                        
+                        INSTANCE = createDatabaseInstance(appContext);
+                        
+                    } catch (Exception e) {
+                        android.util.Log.e("AppDatabase", "Database creation failed, attempting recovery", e);
+                        
+                        // Try to delete corrupted database and retry once
+                        try {
+                            Context appContext = context.getApplicationContext();
+                            appContext.deleteDatabase("eliptv_database");
+                            android.util.Log.i("AppDatabase", "Old database deleted, retrying...");
+                            INSTANCE = createDatabaseInstance(appContext);
+                        } catch (Exception e2) {
+                            android.util.Log.e("AppDatabase", "Database recovery failed - activating in-memory fallback", e2);
+                            DATABASE_AVAILABLE = false;
+                            INSTANCE = null;
+                            InMemoryChannelStore.getInstance().activate();
+                            throw new RuntimeException("Failed to create database after recovery attempt: " + e2.getMessage(), e2);
+                        }
+                    }
                 }
             }
         }
         return INSTANCE;
+    }
+    
+    private static AppDatabase createDatabaseInstance(Context appContext) {
+        // TV-specific database configuration
+        // Use AUTOMATIC journal mode - Room will pick best mode for the device
+        AppDatabase db = Room.databaseBuilder(appContext,
+                        AppDatabase.class, "eliptv_database")
+                .fallbackToDestructiveMigration()
+                // Allow main thread queries temporarily - needed for TV devices
+                // that have issues with background thread initialization
+                .allowMainThreadQueries()
+                .build();
+        
+        android.util.Log.i("AppDatabase", "Database instance created successfully");
+        return db;
     }
 
     @Dao

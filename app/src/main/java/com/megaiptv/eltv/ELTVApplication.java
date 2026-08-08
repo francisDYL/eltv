@@ -33,6 +33,16 @@ public class ELTVApplication extends Application {
             System.exit(1);
         });
 
+        // Pre-initialize database to catch errors early
+        try {
+            AppDatabase db = AppDatabase.getDatabase(this);
+            android.util.Log.i("ELTVApplication", "Database pre-initialized successfully");
+        } catch (Exception e) {
+            android.util.Log.e("ELTVApplication", "Database pre-initialization failed - activating fallback mode", e);
+            // Activate in-memory fallback mode
+            InMemoryChannelStore.getInstance().activate();
+        }
+
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
 
             @Override

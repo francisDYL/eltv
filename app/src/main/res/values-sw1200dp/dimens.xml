@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Ajustements pour très grands écrans 4K+ (sw >= 1200dp) -->
+    <dimen name="lb_browse_rows_margin_start" tools:override="true">140dp</dimen>
+    <dimen name="lb_browse_rows_margin_top" tools:override="true">240dp</dimen>
+
+    <dimen name="channel_card_width">300dp</dimen>
+    <dimen name="channel_card_height">180dp</dimen>
+
+    <dimen name="mini_player_width">360dp</dimen>
+    <dimen name="mini_player_height">202dp</dimen>
+    <dimen name="mini_player_width_details">380dp</dimen>
+    <dimen name="mini_player_height_details">213dp</dimen>
+</resources>
